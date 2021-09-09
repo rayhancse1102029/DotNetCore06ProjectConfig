@@ -23,7 +23,8 @@ namespace DotNetCore06ProjectConfig.Models
 
         [Required(ErrorMessage = "please select your image")]
         [DisplayName("Image")]
-        public IFormFile? Img { get; set; }
+        //public IFormFile? Img { get; set; }
+        public string? Img { get; set; }
 
         [Required(ErrorMessage = "please enter your phone number")]
         [StringLength(20)]

@@ -16,7 +16,7 @@ namespace DotNetCore06ProjectConfig.Data.Entity
         [Required]
         [MaxLength(12)]
         public string? FullName { get; set; }
-        [Required]
+        //[Required]
         public string? ImgUrl { get; set; }
         public string? EmployeeCode { get; set; }
         public int? CompanyId { get; set; }

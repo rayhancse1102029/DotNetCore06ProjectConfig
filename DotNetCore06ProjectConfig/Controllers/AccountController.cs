@@ -1,60 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
+﻿using DotNetCore06ProjectConfig.Data;
+using DotNetCore06ProjectConfig.Data.Entity;
+using DotNetCore06ProjectConfig.Models;
+using DotNetCore06ProjectConfig.Service.Helper.Interfaces;
+using DotNetCore06ProjectConfig.Services.Auth.Interfaces;
+using DotNetCore06ProjectConfig.Services.MasterData.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using DotNetCore06ProjectConfig.Controllers;
-using DotNetCore06ProjectConfig.Data;
-using DotNetCore06ProjectConfig.Data.Entity;
-using DotNetCore06ProjectConfig.Service.Helper.Interfaces;
-using DotNetCore06ProjectConfig.Services.MasterData.Interfaces;
-using DotNetCore06ProjectConfig.Services.Auth.Interfaces;
-using DotNetCore06ProjectConfig.Models;
 
-namespace DotNetCore06ProjectConfig.Controllers
-{
-    [ApiController]
-    [Route("[controller]")]
-    public class AccountController : ControllerBase
+namespace DotNetCore06ProjectConfig.Controllers;
+[ApiController]
+[Route("[controller]")]
+
+public class AccountController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly RoleManager<ApplicationRole> _roleManager;
+        //private readonly RoleManager<ApplicationRole> _roleManager;
         //private readonly IEmailSender _emailSender;
         private readonly ILogger _logger;
         private readonly ApplicationDbContext _context;
         private readonly IMasterDataService _masterDataService;
-        private readonly IFileSaveService _fileSave;
+        //private readonly IFileSaveService _fileSave;
         private readonly IUserService _userService;
-        private readonly IRoleService _roleService;
+        //private readonly IRoleService _roleService;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            RoleManager<ApplicationRole> _roleManager,
+            //RoleManager<ApplicationRole> _roleManager,
             ILogger<AccountController> logger,
             ApplicationDbContext context,
-            IFileSaveService _fileSave,
+            //IFileSaveService _fileSave,
             IMasterDataService _masterDataService,
-            IUserService _userService,
-            IRoleService _roleService)
+            IUserService _userService
+            //IRoleService _roleService
+            )
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _context = context;
             this._masterDataService = _masterDataService;
-            this._roleManager = _roleManager;
-            this._fileSave = _fileSave;
+            //this._roleManager = _roleManager;
+            //this._fileSave = _fileSave;
             this._userService = _userService;
-            this._roleService = _roleService;
+            //this._roleService = _roleService;
         }
 
         [TempData]
@@ -67,115 +58,118 @@ namespace DotNetCore06ProjectConfig.Controllers
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             string msg = "";
-            if (ModelState.IsValid)
+
+            ApplicationUser userIsExists = await _userManager.FindByNameAsync(model.Phone);
+            if (userIsExists != null)
             {
-                ApplicationUser userIsExists = await _userManager.FindByNameAsync(model.Phone);
-                if (userIsExists != null)
-                {
-                    msg = "This Phone Number Already Exists please try again!!!";
-                }
-                else
-                {
-                    var user = new ApplicationUser
-                    {
-                        UserName = model.Phone,
-                        //Email = model.Email,
-                        FullName = model.FullName,
-                        PhoneNumber = model.Phone,
-                        EmployeeCode = await _userService.GenerateEmployeeCode(),
-                        //genderId = model.genderId,
-                        //ImgUrl = baseUrl + "/" + empFileName,
-                        //Address = model.address,
-                        IsVerified = false,
-                        IsDeleted = false,
-                        IsActive = false,
-                        CreatedBy = "System",
-                        CreatedAt = _roleService.GetDateTimeNow()
-                    };
-
-                    var result = await _userManager.CreateAsync(user, model.Password);
-                    if (result.Succeeded)
-                    {
-
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        _logger.LogInformation("User created a new account with password.");
-                        return Ok(msg);                        
-                    }
-                    else
-                    {
-                        msg = "Something is wrong please try Again!!!";
-                    }
-
-                    //string fileName;
-                    //string empFileName = String.Empty;
-                    //string message = _fileSave.SaveUserImage(out fileName, model.Img);
-                    //var baseUrl = HttpContext.Request.Scheme + "://" + HttpContext.Request.Host + "/";
-
-                    //if (message == "success")
-                    //{
-                    //    empFileName = fileName;
-                    //    var baseUrl = HttpContext.Request.Scheme + "://" + HttpContext.Request.Host;
-
-                    //    var user = new ApplicationUser
-                    //    {
-                    //        UserName = model.Phone,
-                    //        //Email = model.Email,
-                    //        FullName = model.FullName,
-                    //        PhoneNumber = model.Phone,
-                    //        EmployeeCode = await _userService.GenerateEmployeeCode(),
-                    //        //genderId = model.genderId,
-                    //        ImgUrl = baseUrl + "/" + empFileName,
-                    //        //Address = model.address,
-                    //        IsVerified = false,
-                    //        IsDeleted = false,
-                    //        IsActive = false,
-                    //        CreatedBy = "System",
-                    //        CreatedAt = _roleService.GetDateTimeNow()
-                    //    };
-
-                    //    var result = await _userManager.CreateAsync(user, model.Password);
-                    //    if (result.Succeeded)
-                    //    {
-                    //        //_logger.LogInformation("User created a new account with password.");
-
-                    //        //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    //        //var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
-                    //        //await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
-
-                    //        HttpContext.Session.SetString("profileImgLink", user.ImgUrl);
-                    //        HttpContext.Session.SetString("username", user.FullName);
-
-                    //        await _signInManager.SignInAsync(user, isPersistent: false);
-                    //        _logger.LogInformation("User created a new account with password.");
-
-                    //        // POS
-                    //        return Ok(msg);
-                    //        // Ecommerce
-                    //        //return RedirectToAction("HybridIndex", "EcommerceWebsite", new { area = "Ecommerce" });
-                    //    }
-                    //    else
-                    //    {
-                    //        msg = "Something is wrong please try Again!!!";
-                    //    }
-                    //}
-                    //else
-                    //{
-                    //    msg = "Error!!! Invalid Image please try Again";
-                    //}
-                }
+                msg = "This Phone Number Already Exists please try again!!!";
             }
             else
             {
-                msg = model.Img == null ? "Please select your profile image and try Again!!!"
-                    : String.IsNullOrEmpty(model.Phone) ? "Please enter username and try Again!!!"
-                    : String.IsNullOrEmpty(model.FullName) ? "Please enter full name and try Again!!!"
-                    : String.IsNullOrEmpty(model.Password) ? "Please enter password and try Again!!!"
-                    : String.IsNullOrEmpty(model.ConfirmPassword) ? "Please enter confirm password and try Again!!!"
-                    : "Something is wrong please try Again!!!";
+                var user = new ApplicationUser
+                {
+                    UserName = model.Phone,
+                    //Email = model.Email,
+                    FullName = model.FullName,
+                    PhoneNumber = model.Phone,
+                    EmployeeCode = await _userService.GenerateEmployeeCode(),
+                    //genderId = model.genderId,
+                    //ImgUrl = baseUrl + "/" + empFileName,
+                    //Address = model.address,
+                    IsVerified = false,
+                    IsDeleted = false,
+                    IsActive = false,
+                    CreatedBy = "System",
+                    CreatedAt = DateTime.Now
+                };
+
+                var result = await _userManager.CreateAsync(user, model.Password);
+                if (result.Succeeded)
+                {
+
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    _logger.LogInformation("User created a new account with password.");
+                    return Ok(msg);
+                }
+                else
+                {
+                    msg = "Something is wrong please try Again!!!";
+                }
+
+                //string fileName;
+                //string empFileName = String.Empty;
+                //string message = _fileSave.SaveUserImage(out fileName, model.Img);
+                //var baseUrl = HttpContext.Request.Scheme + "://" + HttpContext.Request.Host + "/";
+
+                //if (message == "success")
+                //{
+                //    empFileName = fileName;
+                //    var baseUrl = HttpContext.Request.Scheme + "://" + HttpContext.Request.Host;
+
+                //    var user = new ApplicationUser
+                //    {
+                //        UserName = model.Phone,
+                //        //Email = model.Email,
+                //        FullName = model.FullName,
+                //        PhoneNumber = model.Phone,
+                //        EmployeeCode = await _userService.GenerateEmployeeCode(),
+                //        //genderId = model.genderId,
+                //        ImgUrl = baseUrl + "/" + empFileName,
+                //        //Address = model.address,
+                //        IsVerified = false,
+                //        IsDeleted = false,
+                //        IsActive = false,
+                //        CreatedBy = "System",
+                //        CreatedAt = _roleService.GetDateTimeNow()
+                //    };
+
+                //    var result = await _userManager.CreateAsync(user, model.Password);
+                //    if (result.Succeeded)
+                //    {
+                //        //_logger.LogInformation("User created a new account with password.");
+
+                //        //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                //        //var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
+                //        //await _emailSender.SendEmailConfirmationAsync(model.Email, callbackUrl);
+
+                //        HttpContext.Session.SetString("profileImgLink", user.ImgUrl);
+                //        HttpContext.Session.SetString("username", user.FullName);
+
+                //        await _signInManager.SignInAsync(user, isPersistent: false);
+                //        _logger.LogInformation("User created a new account with password.");
+
+                //        // POS
+                //        return Ok(msg);
+                //        // Ecommerce
+                //        //return RedirectToAction("HybridIndex", "EcommerceWebsite", new { area = "Ecommerce" });
+                //    }
+                //    else
+                //    {
+                //        msg = "Something is wrong please try Again!!!";
+                //    }
+                //}
+                //else
+                //{
+                //    msg = "Error!!! Invalid Image please try Again";
+                //}
             }
-            // If we got this far, something failed, redisplay form
-            //ViewBag.LoginMessage = msg;
-            return Ok(msg);
+
+        //if (ModelState.IsValid)
+        //{
+
+        //}
+        //else
+        //{
+        //    msg = model.Img == null ? "Please select your profile image and try Again!!!"
+        //        : String.IsNullOrEmpty(model.Phone) ? "Please enter username and try Again!!!"
+        //        : String.IsNullOrEmpty(model.FullName) ? "Please enter full name and try Again!!!"
+        //        : String.IsNullOrEmpty(model.Password) ? "Please enter password and try Again!!!"
+        //        : String.IsNullOrEmpty(model.ConfirmPassword) ? "Please enter confirm password and try Again!!!"
+        //        : "Something is wrong please try Again!!!";
+        //}
+        // If we got this far, something failed, redisplay form
+        //ViewBag.LoginMessage = msg;
+        return Ok(msg);
             //return RedirectToAction("HybridIndex", "EcommerceWebsite", new {area = "Ecommerce"});
         }
 
@@ -280,4 +274,3 @@ namespace DotNetCore06ProjectConfig.Controllers
 
         #endregion
     }
-}

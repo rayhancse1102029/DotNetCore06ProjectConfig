@@ -92,8 +92,8 @@ namespace DotNetCore06ProjectConfig
 
             #region Auth
             services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IRoleService, RoleService>();
-            services.AddScoped<ISeedDataService, SeedDataService>();
+            //services.AddScoped<IRoleService, RoleService>();
+            //services.AddScoped<ISeedDataService, SeedDataService>();
             services.AddScoped<INavbarService, NavbarService>();
             //services.AddScoped<IFileSaveService, FileSaveService>();
 
